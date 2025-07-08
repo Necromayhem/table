@@ -48,7 +48,7 @@ const items = ref([
 
 :deep(.p-menubar-item.p-menuitem-active .p-menubar-item-label),
 :deep(.p-menubar-item.p-menuitem-active .p-menubar-item-icon) {
-	color: rgb(0, 255, 0) !important;
+	color: rgb(161, 225, 187) !important;
 }
 
 :deep(.p-menubar-item .p-menubar-item-content) {
