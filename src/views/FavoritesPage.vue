@@ -12,7 +12,15 @@ const favoriteUsers = computed(() => favoritesStore.favoriteUsers)
 <template>
 	<div class="p-4">
 		<div v-if="favoriteUsers.length === 0" class="text-gray-500 text-center">
-			Нет пользователей в избранном
+			<Rating
+				:modelValue="1"
+				:stars="1"
+				:readonly="true"
+				:cancel="false"
+				class="text-6xl text-yellow-400"
+			/>
+			<i class="pi pi-star text-6xl text-green"></i>
+			<p class="mt-2 font-bold">Список избранных пуст</p>
 		</div>
 
 		<div v-else class="flex justify-center">
@@ -23,7 +31,7 @@ const favoriteUsers = computed(() => favoritesStore.favoriteUsers)
 					class="p-4 shadow-md hover:shadow-lg transition-shadow w-80"
 				>
 					<template #title>
-						<h3 class="text-xl font-semibold">{{ user.name }}</h3>
+						<h3 class="text-xl font-normal">{{ user.name }}</h3>
 					</template>
 
 					<template #content>

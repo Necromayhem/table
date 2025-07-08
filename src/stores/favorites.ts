@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
+import { useStorage } from '@vueuse/core'
 import type { User } from '@/composables/useUsers'
 
 export const useFavoritesStore = defineStore('favorites', () => {
-	const favoriteUsers = ref<User[]>([])
+	const favoriteUsers = useStorage<User[]>('favoriteUsers', [])
 
 	const addToFavorites = (user: User) => {
 		if (!favoriteUsers.value.some(fav => fav.id === user.id)) {
