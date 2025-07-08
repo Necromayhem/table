@@ -41,19 +41,22 @@ const items = ref([
 </template>
 
 <style scoped>
+:deep(.p-menubar-item .p-menubar-item-label),
+:deep(.p-menubar-item .p-menubar-item-icon) {
+	color: inherit !important;
+}
+
 :deep(.p-menubar-item.p-menuitem-active .p-menubar-item-label),
 :deep(.p-menubar-item.p-menuitem-active .p-menubar-item-icon) {
 	color: rgb(0, 255, 0) !important;
 }
 
-:deep(
-	.p-menubar-item[data-p-focused='true']:not(.p-menuitem-active)
-		.p-menubar-item-label
-),
-:deep(
-	.p-menubar-item[data-p-focused='true']:not(.p-menuitem-active)
-		.p-menubar-item-icon
-) {
-	color: inherit !important;
+:deep(.p-menubar-item .p-menubar-item-content) {
+	background: transparent !important;
+}
+
+:deep(.p-menubar-item .p-menubar-item-content:focus) {
+	box-shadow: none !important;
+	outline: none !important;
 }
 </style>
