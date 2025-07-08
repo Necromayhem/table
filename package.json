@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@primeuix/themes": "^1.2.1",
+    "axios": "^1.10.0",
     "pinia": "^3.0.3",
     "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",
@@ -22,7 +23,7 @@
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.2",
-    "@types/node": "^22.15.32",
+    "@types/node": "^22.16.0",
     "@vitejs/plugin-vue": "^6.0.0",
     "@vue/compiler-sfc": "^3.5.17",
     "@vue/tsconfig": "^0.7.0",
