@@ -1,5 +1,6 @@
 import { ref, watchEffect, toValue } from 'vue'
 import axios from 'axios'
+import { useFavoritesStore } from '@/stores/favorites'
 
 export interface User {
 	id: number
@@ -7,11 +8,17 @@ export interface User {
 	email: string
 	address: {
 		street: string
+		suite?: string
+		city: string
+		zipcode?: string
 		[key: string]: any
 	}
 	phone: string
+	website: string
 	company: {
 		name: string
+		catchPhrase?: string
+		bs?: string
 		[key: string]: any
 	}
 	isFavorite?: boolean
@@ -21,6 +28,7 @@ export default function useUsers(url: string | (() => string)) {
 	const users = ref<User[]>([])
 	const loading = ref(false)
 	const error = ref<string | null>(null)
+	const favoritesStore = useFavoritesStore()
 
 	const fetchUsers = async () => {
 		try {
@@ -28,7 +36,10 @@ export default function useUsers(url: string | (() => string)) {
 			error.value = null
 			const apiUrl = toValue(url)
 			const response = await axios.get<User[]>(apiUrl)
-			users.value = response.data.map(user => ({ ...user, isFavorite: false }))
+			users.value = response.data.map(user => ({
+				...user,
+				isFavorite: favoritesStore.isFavorite(user.id),
+			}))
 		} catch (err) {
 			error.value = 'Failed to fetch users'
 			console.error('Error fetching users:', err)
@@ -42,7 +53,8 @@ export default function useUsers(url: string | (() => string)) {
 	})
 
 	const toggleFavorite = (user: User) => {
-		user.isFavorite = !user.isFavorite
+		const newFavoriteState = favoritesStore.toggleFavorite(user)
+		user.isFavorite = newFavoriteState
 	}
 
 	return {
