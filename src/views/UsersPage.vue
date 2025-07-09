@@ -41,10 +41,6 @@ onMounted(() => {
 		page.value = Number(route.query.page)
 		perPage.value = Number(route.query.perPage)
 	}
-
-	if (users.value.length === 0) {
-		refreshUsers()
-	}
 })
 
 watch([page, perPage], ([newPage, newPerPage]) => {
@@ -75,8 +71,9 @@ watch(
 		<div v-if="loading" class="loading-indicator text-center">
 			<ProgressSpinner />
 		</div>
+
 		<div
-			v-if="backgroundLoading && !loading"
+			v-if="backgroundLoading"
 			class="background-loading-indicator text-center"
 		>
 			<ProgressSpinner />

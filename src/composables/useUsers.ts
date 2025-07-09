@@ -32,7 +32,8 @@ export default function useUsers(url: string | (() => string)) {
 	const error = ref<string | null>(null)
 	const favoritesStore = useFavoritesStore()
 	const usersCacheStore = useUsersCacheStore()
-	const showLoadingIndicator = ref(false)
+
+	let currentLoadPromise: Promise<void> | null = null
 
 	const applyFavorites = (usersList: User[]) => {
 		return usersList.map(user => ({
@@ -41,50 +42,46 @@ export default function useUsers(url: string | (() => string)) {
 		}))
 	}
 
-	const fetchUsers = async (forceFetch = false) => {
+	const fetchUsers = async (forceFetch = false, background = false) => {
+		if (currentLoadPromise && !forceFetch) {
+			return currentLoadPromise
+		}
+
 		try {
-			const cachedUsers = usersCacheStore.getUsers()
-
-			showLoadingIndicator.value = cachedUsers.length === 0 || forceFetch
-
-			if (cachedUsers.length > 0 && !forceFetch) {
-				users.value = applyFavorites(cachedUsers)
-			}
-
-			const needUpdate =
-				forceFetch ||
-				!usersCacheStore.isCacheValid() ||
-				usersCacheStore.isCacheTooOld()
-
-			if (!needUpdate) {
-				showLoadingIndicator.value = false
-				return
-			}
-
-			if (showLoadingIndicator.value) {
-				loading.value = true
-			} else {
+			if (background) {
 				backgroundLoading.value = true
+			} else {
+				loading.value = true
 			}
 
 			const apiUrl = typeof url === 'function' ? url() : url
-			const response = await axios.get<User[]>(apiUrl)
-
-			const newUsers = response.data
-			const dataChanged =
-				JSON.stringify(cachedUsers) !== JSON.stringify(newUsers)
-
-			if (dataChanged || forceFetch) {
+			currentLoadPromise = axios.get<User[]>(apiUrl).then(async response => {
+				const newUsers = response.data
 				usersCacheStore.setUsers(newUsers)
 				users.value = applyFavorites(newUsers)
-			}
+			})
+
+			await currentLoadPromise
 		} catch (err) {
 			error.value = 'Failed to fetch users'
 			console.error('Error fetching users:', err)
 		} finally {
 			loading.value = false
 			backgroundLoading.value = false
-			showLoadingIndicator.value = false
+			currentLoadPromise = null
+		}
+	}
+
+	const loadInitialData = async () => {
+		const cachedUsers = usersCacheStore.getUsers()
+		if (cachedUsers.length > 0) {
+			users.value = applyFavorites(cachedUsers)
+		}
+
+		if (cachedUsers.length === 0 || usersCacheStore.isCacheTooOld()) {
+			await fetchUsers(false, cachedUsers.length > 0)
+		} else if (!usersCacheStore.isCacheValid()) {
+			fetchUsers(false, true)
 		}
 	}
 
@@ -93,7 +90,7 @@ export default function useUsers(url: string | (() => string)) {
 	}
 
 	onMounted(() => {
-		fetchUsers()
+		loadInitialData()
 	})
 
 	const toggleFavorite = (user: User) => {
@@ -106,7 +103,6 @@ export default function useUsers(url: string | (() => string)) {
 		loading,
 		backgroundLoading,
 		error,
-		showLoadingIndicator,
 		toggleFavorite,
 		refreshUsers,
 	}
