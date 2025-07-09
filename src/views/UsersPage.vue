@@ -1,18 +1,65 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import useUsers from '../composables/useUsers'
 import { API_URLS } from '../constants/api'
 
+const route = useRoute()
+const router = useRouter()
 const { users, toggleFavorite, refreshUsers } = useUsers(API_URLS.USERS)
 
+const page = ref(1)
+const perPage = ref(10)
+const first = computed({
+	get: () => (page.value - 1) * perPage.value,
+	set: value => {
+		page.value = Math.floor(value / perPage.value) + 1
+	},
+})
+
 onMounted(() => {
+	if (!route.query.page || !route.query.perPage) {
+		router.push({
+			query: {
+				...route.query,
+				page: page.value,
+				perPage: perPage.value,
+			},
+		})
+	} else {
+		page.value = Number(route.query.page)
+		perPage.value = Number(route.query.perPage)
+	}
+
 	if (users.value.length === 0) {
 		refreshUsers()
 	}
 })
+
+watch([page, perPage], ([newPage, newPerPage]) => {
+	router.push({
+		query: {
+			...route.query,
+			page: newPage,
+			perPage: newPerPage,
+		},
+	})
+})
+
+watch(
+	() => route.query,
+	newQuery => {
+		if (newQuery.page) {
+			page.value = Number(newQuery.page)
+		}
+		if (newQuery.perPage) {
+			perPage.value = Number(newQuery.perPage)
+		}
+	}
+)
 </script>
 
 <template>
@@ -22,7 +69,8 @@ onMounted(() => {
 				:value="users"
 				stripedRows
 				paginator
-				:rows="10"
+				v-model:first="first"
+				v-model:rows="perPage"
 				:rowsPerPageOptions="[5, 10, 25, 50]"
 				tableStyle="min-width: 50rem"
 			>
