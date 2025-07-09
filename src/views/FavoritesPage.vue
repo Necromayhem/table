@@ -20,7 +20,7 @@ const favoriteUsers = computed(() => favoritesStore.favoriteUsers)
 				class="text-6xl text-yellow-400"
 			/>
 			<i class="pi pi-star text-6xl text-green"></i>
-			<p class="mt-2 font-bold">Список избранных пуст</p>
+			<p class="mt-2 font-bold">Нет пользователей в избранном</p>
 		</div>
 
 		<div v-else class="flex justify-center">
