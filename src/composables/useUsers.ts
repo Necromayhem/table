@@ -1,4 +1,4 @@
-import { ref, watchEffect, toValue } from 'vue'
+import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useUsersCacheStore } from '@/stores/usersCache'
@@ -28,46 +28,63 @@ export interface User {
 export default function useUsers(url: string | (() => string)) {
 	const users = ref<User[]>([])
 	const loading = ref(false)
+	const backgroundLoading = ref(false)
 	const error = ref<string | null>(null)
 	const favoritesStore = useFavoritesStore()
 	const usersCacheStore = useUsersCacheStore()
+	const showLoadingIndicator = ref(false)
+
+	const applyFavorites = (usersList: User[]) => {
+		return usersList.map(user => ({
+			...user,
+			isFavorite: favoritesStore.isFavorite(user.id),
+		}))
+	}
 
 	const fetchUsers = async (forceFetch = false) => {
 		try {
-			loading.value = true
-			error.value = null
+			const cachedUsers = usersCacheStore.getUsers()
 
-			if (!forceFetch && usersCacheStore.isCacheValid()) {
-				users.value = usersCacheStore.getUsers().map(user => ({
-					...user,
-					isFavorite: favoritesStore.isFavorite(user.id),
-				}))
+			showLoadingIndicator.value = cachedUsers.length === 0 || forceFetch
+
+			if (cachedUsers.length > 0 && !forceFetch) {
+				users.value = applyFavorites(cachedUsers)
+			}
+
+			const needUpdate =
+				forceFetch ||
+				!usersCacheStore.isCacheValid() ||
+				usersCacheStore.isCacheTooOld()
+
+			if (!needUpdate) {
+				showLoadingIndicator.value = false
 				return
 			}
 
-			const apiUrl = toValue(url)
+			if (showLoadingIndicator.value) {
+				loading.value = true
+			} else {
+				backgroundLoading.value = true
+			}
+
+			const apiUrl = typeof url === 'function' ? url() : url
 			const response = await axios.get<User[]>(apiUrl)
 
-			usersCacheStore.setUsers(response.data)
+			const newUsers = response.data
+			const dataChanged =
+				JSON.stringify(cachedUsers) !== JSON.stringify(newUsers)
 
-			users.value = response.data.map(user => ({
-				...user,
-				isFavorite: favoritesStore.isFavorite(user.id),
-			}))
+			if (dataChanged || forceFetch) {
+				usersCacheStore.setUsers(newUsers)
+				users.value = applyFavorites(newUsers)
+			}
 		} catch (err) {
 			error.value = 'Failed to fetch users'
 			console.error('Error fetching users:', err)
-
-			if (usersCacheStore.cachedUsers.length > 0) {
-				users.value = usersCacheStore.getUsers().map(user => ({
-					...user,
-					isFavorite: favoritesStore.isFavorite(user.id),
-				}))
-			} else {
-				users.value = []
-			}
 		} finally {
 			loading.value = false
+			backgroundLoading.value = false
+			showLoadingIndicator.value = false
 		}
 	}
 
@@ -75,7 +92,7 @@ export default function useUsers(url: string | (() => string)) {
 		fetchUsers(true)
 	}
 
-	watchEffect(() => {
+	onMounted(() => {
 		fetchUsers()
 	})
 
@@ -87,7 +104,9 @@ export default function useUsers(url: string | (() => string)) {
 	return {
 		users,
 		loading,
+		backgroundLoading,
 		error,
+		showLoadingIndicator,
 		toggleFavorite,
 		refreshUsers,
 	}

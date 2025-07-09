@@ -1,37 +1,53 @@
 import { defineStore } from 'pinia'
-import { useStorage } from '@vueuse/core'
 import type { User } from '@/composables/useUsers'
 
 export const useUsersCacheStore = defineStore('usersCache', () => {
-	const cachedUsers = useStorage<User[]>('cachedUsers', [])
-	const lastFetchTime = useStorage<number>('lastFetchTime', 0)
-	const cacheDuration = 5 * 60 * 1000
+	const CACHE_KEY = 'cachedUsers'
+	const TIMESTAMP_KEY = 'lastFetchTime'
+	const CACHE_DURATION = 5 * 60 * 1000
+
+	const getUsers = (): User[] => {
+		const stored = localStorage.getItem(CACHE_KEY)
+		return stored ? JSON.parse(stored) : []
+	}
 
 	const setUsers = (users: User[]) => {
-		cachedUsers.value = users
-		lastFetchTime.value = Date.now()
+		localStorage.setItem(CACHE_KEY, JSON.stringify(users))
+		localStorage.setItem(TIMESTAMP_KEY, Date.now().toString())
 	}
 
-	const getUsers = () => {
-		return cachedUsers.value
+	const getLastFetchTime = (): number => {
+		const stored = localStorage.getItem(TIMESTAMP_KEY)
+		return stored ? parseInt(stored) : 0
 	}
 
-	const isCacheValid = () => {
-		if (cachedUsers.value.length === 0) return false
-		return Date.now() - lastFetchTime.value < cacheDuration
+	const isCacheValid = (): boolean => {
+		const lastFetch = getLastFetchTime()
+		if (lastFetch === 0) return false
+
+		const cacheAge = Date.now() - lastFetch
+		return cacheAge < CACHE_DURATION
+	}
+
+	const isCacheTooOld = (): boolean => {
+		const lastFetch = getLastFetchTime()
+		if (lastFetch === 0) return true
+
+		const cacheAge = Date.now() - lastFetch
+		return cacheAge > CACHE_DURATION * 2
 	}
 
 	const clearCache = () => {
-		cachedUsers.value = []
-		lastFetchTime.value = 0
+		localStorage.removeItem(CACHE_KEY)
+		localStorage.removeItem(TIMESTAMP_KEY)
 	}
 
 	return {
-		cachedUsers,
-		lastFetchTime,
-		setUsers,
 		getUsers,
+		setUsers,
+		getLastFetchTime,
 		isCacheValid,
+		isCacheTooOld,
 		clearCache,
 	}
 })

@@ -4,12 +4,20 @@ import { useRoute, useRouter } from 'vue-router'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
+import ProgressSpinner from 'primevue/progressspinner'
 import useUsers from '../composables/useUsers'
 import { API_URLS } from '../constants/api'
 
 const route = useRoute()
 const router = useRouter()
-const { users, toggleFavorite, refreshUsers } = useUsers(API_URLS.USERS)
+const {
+	users,
+	toggleFavorite,
+	refreshUsers,
+	backgroundLoading,
+	loading,
+	error,
+} = useUsers(API_URLS.USERS)
 
 const page = ref(1)
 const perPage = ref(10)
@@ -64,7 +72,33 @@ watch(
 
 <template>
 	<div class="p-4">
-		<div class="card">
+		<div v-if="loading" class="loading-indicator text-center">
+			<ProgressSpinner />
+		</div>
+		<div
+			v-if="backgroundLoading && !loading"
+			class="background-loading-indicator text-center"
+		>
+			<ProgressSpinner />
+		</div>
+
+		<div v-else-if="error" class="error-message text-center p-4">
+			<div class="text-red-500 font-bold mb-2">
+				Произошла ошибка при загрузке данных
+			</div>
+			<div class="mb-3">{{ error }}</div>
+			<Button
+				label="Попробовать снова"
+				icon="pi pi-refresh"
+				@click="refreshUsers"
+			/>
+		</div>
+
+		<div
+			v-else-if="users.length > 0"
+			class="card"
+			:class="{ 'opacity-50': backgroundLoading }"
+		>
 			<DataTable
 				:value="users"
 				stripedRows
