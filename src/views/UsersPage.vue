@@ -74,13 +74,38 @@ watch(
 				:rowsPerPageOptions="[5, 10, 25, 50]"
 				tableStyle="min-width: 50rem"
 			>
-				<Column field="id" header="ID" sortable></Column>
-				<Column field="name" header="Name" sortable></Column>
-				<Column field="email" header="Email" sortable></Column>
-				<Column field="address.street" header="Street" sortable></Column>
-				<Column field="phone" header="Phone" sortable></Column>
-				<Column field="company.name" header="Company" sortable></Column>
-				<Column>
+				<Column field="id" header="ID" sortable style="width: 100px"></Column>
+				<Column
+					field="name"
+					header="Name"
+					sortable
+					style="width: 200px"
+				></Column>
+				<Column
+					field="email"
+					header="Email"
+					sortable
+					style="width: 250px"
+				></Column>
+				<Column
+					field="address.street"
+					header="Street"
+					sortable
+					style="width: 200px"
+				></Column>
+				<Column
+					field="phone"
+					header="Phone"
+					sortable
+					style="width: 150px"
+				></Column>
+				<Column
+					field="company.name"
+					header="Company"
+					sortable
+					style="width: 200px"
+				></Column>
+				<Column style="width: 150px">
 					<template #body="{ data }">
 						<Button
 							:icon="data.isFavorite ? 'pi pi-star-fill' : 'pi pi-star'"

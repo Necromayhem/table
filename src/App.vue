@@ -11,6 +11,6 @@ import MenuBar from './components/MenuBar.vue'
 
 <style scoped>
 .menubar {
-	margin-bottom: 40px;
+	margin-bottom: 20px;
 }
 </style>
