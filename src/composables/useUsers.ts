@@ -1,6 +1,7 @@
 import { ref, watchEffect, toValue } from 'vue'
 import axios from 'axios'
 import { useFavoritesStore } from '@/stores/favorites'
+import { useUsersCacheStore } from '@/stores/usersCache'
 
 export interface User {
 	id: number
@@ -29,13 +30,26 @@ export default function useUsers(url: string | (() => string)) {
 	const loading = ref(false)
 	const error = ref<string | null>(null)
 	const favoritesStore = useFavoritesStore()
+	const usersCacheStore = useUsersCacheStore()
 
-	const fetchUsers = async () => {
+	const fetchUsers = async (forceFetch = false) => {
 		try {
 			loading.value = true
 			error.value = null
+
+			if (!forceFetch && usersCacheStore.isCacheValid()) {
+				users.value = usersCacheStore.getUsers().map(user => ({
+					...user,
+					isFavorite: favoritesStore.isFavorite(user.id),
+				}))
+				return
+			}
+
 			const apiUrl = toValue(url)
 			const response = await axios.get<User[]>(apiUrl)
+
+			usersCacheStore.setUsers(response.data)
+
 			users.value = response.data.map(user => ({
 				...user,
 				isFavorite: favoritesStore.isFavorite(user.id),
@@ -43,9 +57,22 @@ export default function useUsers(url: string | (() => string)) {
 		} catch (err) {
 			error.value = 'Failed to fetch users'
 			console.error('Error fetching users:', err)
+
+			if (usersCacheStore.cachedUsers.length > 0) {
+				users.value = usersCacheStore.getUsers().map(user => ({
+					...user,
+					isFavorite: favoritesStore.isFavorite(user.id),
+				}))
+			} else {
+				users.value = []
+			}
 		} finally {
 			loading.value = false
 		}
+	}
+
+	const refreshUsers = () => {
+		fetchUsers(true)
 	}
 
 	watchEffect(() => {
@@ -62,5 +89,6 @@ export default function useUsers(url: string | (() => string)) {
 		loading,
 		error,
 		toggleFavorite,
+		refreshUsers,
 	}
 }

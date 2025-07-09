@@ -1,18 +1,23 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import useUsers from '../composables/useUsers'
 import { API_URLS } from '../constants/api'
 
-const { users, loading, error, toggleFavorite } = useUsers(API_URLS.USERS)
+const { users, toggleFavorite, refreshUsers } = useUsers(API_URLS.USERS)
+
+onMounted(() => {
+	if (users.value.length === 0) {
+		refreshUsers()
+	}
+})
 </script>
 
 <template>
 	<div class="p-4">
-		<div v-if="loading">Loading users...</div>
-		<div v-else-if="error" class="text-red-500">{{ error }}</div>
-		<div v-else class="card">
+		<div class="card">
 			<DataTable
 				:value="users"
 				stripedRows
